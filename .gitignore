@@ -7,8 +7,12 @@
 .sconsign.dblite
 *.pyc
 
+# Cmake
+build/
+
 # MacOS
 .DS_Store
 
 # Editors
 .vscode/
+
