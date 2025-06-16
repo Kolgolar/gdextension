@@ -1,14 +1,14 @@
 #include "my_node.hpp"
+
+// #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/image.hpp>
+#include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include <iostream>
+#include <godot_cpp/godot.hpp>
 
-#include <gst/gst.h>
+// #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
-#include <windows.h>
 
-#include <godot_cpp/classes/video_stream.hpp>
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
 
@@ -17,7 +17,9 @@ using namespace godot;
 void MyNode::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("hello_node"), &MyNode::hello_node);
-	ClassDB::bind_method(D_METHOD("start_stream"), &MyNode::start_stream);
+	ClassDB::bind_method(D_METHOD("open_test_window"), &MyNode::open_test_window);
+    ClassDB::bind_method(D_METHOD("start_stream"), &MyNode::start_stream);
+    ClassDB::bind_method(D_METHOD("get_texture"), &MyNode::get_texture);
 	ClassDB::bind_method(D_METHOD("stop_stream"), &MyNode::stop_stream);
 }
 
@@ -43,49 +45,95 @@ void MyNode::_process(double delta)
 }
 
 
-void MyNode::start_stream(String host, int port) {
-    // Инициализация GStreamer
+void MyNode::start_stream() {
     gst_init(nullptr, nullptr);
 
-    // Создание pipeline
-	gst_debug_set_default_threshold(GST_LEVEL_DEBUG);
-    GstElement* pipeline = gst_pipeline_new("webcam-pipeline");
-    GstElement* source = gst_element_factory_make("ksvideosrc ", "webcam-source"); // Windows использует ksvideosrc
-    GstElement* convert = gst_element_factory_make("videoconvert", "converter");
-    GstElement* sink = gst_element_factory_make("autovideosink", "video-output");
+    // Пайплайн для приёма H264 по UDP и декодирования
+    const char *pipeline_desc =
+        "udpsrc port=5000 caps=\"application/x-rtp, media=video, encoding-name=H264, payload=96\" ! "
+        "rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=RGB ! appsink name=appsink";
 
-    if (!pipeline || !source || !convert || !sink) {
-        std::cerr << "Error: Can't create GStreamer elements!" << std::endl;
+    GError *error = nullptr;
+    pipeline = gst_parse_launch(pipeline_desc, &error);
+    if (!pipeline) {
+        UtilityFunctions::print("Failed to create pipeline");
         return;
     }
 
-    g_object_set(source, "device-index", 0, NULL);
-
-    // Добавление элементов в pipeline
-    gst_bin_add_many(GST_BIN(pipeline), source, convert, sink, NULL);
-
-    // Соединение элементов: source → convert → sink
-    if (!gst_element_link_many(source, convert, sink, NULL)) {
-        std::cerr << "Error: Can't connect the elements!" << std::endl;
-        gst_object_unref(pipeline);
-        return;
-    }
-
-    // Запуск pipeline
-    GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE) {
-        std::cerr << "Error: Can't launch the pipeline!" << std::endl;
-        gst_object_unref(pipeline);
-        return;
-    }
-
-    std::cout << "Webcam is on. Press Enter to end this madness..." << std::endl;
-    std::cin.get(); // Ждём нажатия Enter
+    appsink = gst_bin_get_by_name(GST_BIN(pipeline), "appsink");
+    gst_element_set_state(pipeline, GST_STATE_PLAYING);
 }
+
+
+Ref<ImageTexture> MyNode::get_texture() {
+    if (!appsink)
+        return nullptr;
+
+    GstSample *sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 0);
+    if (!sample)
+        return nullptr;
+
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
+    GstCaps *caps = gst_sample_get_caps(sample);
+    GstStructure *s = gst_caps_get_structure(caps, 0);
+
+    int width, height;
+    gst_structure_get_int(s, "width", &width);
+    gst_structure_get_int(s, "height", &height);
+
+    GstMapInfo map;
+    gst_buffer_map(buffer, &map, GST_MAP_READ);
+
+    Ref<Image> img = memnew(Image);
+    PackedByteArray arr;
+    arr.resize(width * height * 3);
+    memcpy(arr.ptrw(), map.data, width * height * 3);
+    img->create_from_data(width, height, false, Image::FORMAT_RGB8, arr);
+    Ref<ImageTexture> texture;
+    if (!texture.is_valid()) {
+        texture.instantiate();
+        texture->create_from_image(img);
+    } else {
+        texture->update(img);
+    }
+
+    gst_buffer_unmap(buffer, &map);
+    gst_sample_unref(sample);
+
+    return texture;
+}
+
+
+
 
 void MyNode::stop_stream() {
 	gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
+}
+
+
+void MyNode::open_test_window() {
+    gst_init(nullptr, nullptr);
+
+    // Use videotestsrc for a test pattern
+    GstElement *test_pipeline = gst_parse_launch(
+        "videotestsrc ! videoconvert ! autovideosink", nullptr);
+
+    if (!test_pipeline) {
+        g_printerr("Failed to create pipeline.\n");
+        return;
+    }
+
+    gst_element_set_state(test_pipeline, GST_STATE_PLAYING);
+
+    // Run a GLib main loop to keep the window open
+    GMainLoop *loop = g_main_loop_new(nullptr, FALSE);
+    g_main_loop_run(loop);
+
+    // Cleanup
+    gst_element_set_state(test_pipeline, GST_STATE_NULL);
+    gst_object_unref(test_pipeline);
+    g_main_loop_unref(loop);
 }
 
 

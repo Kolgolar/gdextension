@@ -6,8 +6,8 @@
 #include "my_node.hpp"
 #include "my_singleton.hpp"
 
-#include <windows.h>
-#include <stdio.h>
+// #include <windows.h>
+// #include <stdio.h>
 
 static MySingleton *_my_singleton;
 

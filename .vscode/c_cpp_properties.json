@@ -4,9 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/gstreamer/1.0/msvc_x86_64/include/gstreamer-1.0",
-                "C:/gstreamer/1.0/msvc_x86_64/include/glib-2.0",
-                "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0/include"
+                "/usr/include/gstreamer-1.0",
+                "/usr/include/glib-2.0",
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
             ],
             "defines": ["GSTREAMER_LITE"],
             "windowsSdkVersion": "10.0.22000.0",

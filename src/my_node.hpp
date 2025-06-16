@@ -15,10 +15,12 @@ protected:
 	static GstFlowReturn on_new_sample(GstElement *sink, gpointer user_data);
 
 private:
-	GstElement *pipeline;
-    Ref<ImageTexture> texture;
+    GstElement *pipeline = nullptr;
+    GstElement *appsink = nullptr;
 
 public:
+	Ref<ImageTexture> texture;
+
 	MyNode();
 	~MyNode();
 
@@ -26,9 +28,10 @@ public:
 	void _process(double delta) override;
 
 	// void get_version();
-	void start_stream(String host, int port);
+	Ref<ImageTexture> get_texture();
+	void open_test_window();
+	void start_stream();
     void stop_stream();
-	Ref<ImageTexture> get_texture() { return texture; }
 
 	godot::String hello_node();
 };
