@@ -1,0 +1,15 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+	  {
+		"name": "Debug GDExtension",
+		"type": "cppvsdbg",
+		"request": "launch",
+		"preLaunchTask": "build", 
+		"program": "C:\\Godot\\Engine\\4.4.1\\Godot_v4.4.1-stable_win64.exe",
+		"args": ["--path", "C:\\Dev\\Job\\gstreamer\\apiary_godot\\project"],
+		"cwd": "${workspaceFolder}\\project",
+		// "stopAtEntry": false
+	  }
+	]
+  }
