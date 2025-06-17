@@ -1,4 +1,4 @@
-#include "my_node.hpp"
+#include "gstreamer.hpp"
 
 // #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -6,7 +6,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/godot.hpp>
 
-// #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 
 
@@ -14,38 +13,35 @@ using namespace godot;
 
 // typedef void (*gst_init_func)(int*, char***);
 
-void MyNode::_bind_methods()
+void GStreamer::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("hello_node"), &MyNode::hello_node);
-	ClassDB::bind_method(D_METHOD("open_test_window"), &MyNode::open_test_window);
-    ClassDB::bind_method(D_METHOD("start_stream"), &MyNode::start_stream);
-    ClassDB::bind_method(D_METHOD("get_texture"), &MyNode::get_texture);
-	ClassDB::bind_method(D_METHOD("stop_stream"), &MyNode::stop_stream);
+	ClassDB::bind_method(D_METHOD("open_test_window"), &GStreamer::open_test_window);
+    ClassDB::bind_method(D_METHOD("start_stream"), &GStreamer::start_stream);
+    ClassDB::bind_method(D_METHOD("get_texture"), &GStreamer::get_texture);
+	ClassDB::bind_method(D_METHOD("stop_stream"), &GStreamer::stop_stream);
 }
 
-MyNode::MyNode()
+GStreamer::GStreamer()
 {
+    UtilityFunctions::print("GStreamer addon is ready!");
 }
 
-MyNode::~MyNode()
+GStreamer::~GStreamer()
 {
 }
 
 // Override built-in methods with your own logic. Make sure to declare them in the header as well!
 
-void MyNode::_ready()
-{
-	godot::print_line("Kek8");
+// void GStreamer::_ready()
+// {
+// }
 
-	
-}
-
-void MyNode::_process(double delta)
-{
-}
+// void GStreamer::_process(double delta)
+// {
+// }
 
 
-void MyNode::start_stream() {
+void GStreamer::start_stream() {
     gst_init(nullptr, nullptr);
 
     // Пайплайн для приёма H264 по UDP и декодирования
@@ -65,7 +61,7 @@ void MyNode::start_stream() {
 }
 
 
-Ref<ImageTexture> MyNode::get_texture() {
+Ref<ImageTexture> GStreamer::get_texture() {
     if (!appsink)
         return nullptr;
 
@@ -119,15 +115,13 @@ Ref<ImageTexture> MyNode::get_texture() {
 }
 
 
-
-
-void MyNode::stop_stream() {
+void GStreamer::stop_stream() {
 	gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
 }
 
 
-void MyNode::open_test_window() {
+void GStreamer::open_test_window() {
     gst_init(nullptr, nullptr);
 
     // Use videotestsrc for a test pattern
@@ -149,11 +143,4 @@ void MyNode::open_test_window() {
     gst_element_set_state(test_pipeline, GST_STATE_NULL);
     gst_object_unref(test_pipeline);
     g_main_loop_unref(loop);
-}
-
-
-
-godot::String MyNode::hello_node()
-{
-	return "Hello GDExtension Node\n";
 }

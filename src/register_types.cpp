@@ -3,7 +3,7 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 
-#include "my_node.hpp"
+#include "gstreamer.hpp"
 #include "my_singleton.hpp"
 
 // #include <windows.h>
@@ -42,11 +42,11 @@ void gdextension_initialize(ModuleInitializationLevel p_level)
 	// add_additional_dll_directories();
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
-		ClassDB::register_class<MyNode>();
-		ClassDB::register_class<MySingleton>();
+		ClassDB::register_class<GStreamer>();
+		// ClassDB::register_class<MySingleton>();
 
-		_my_singleton = memnew(MySingleton);
-		Engine::get_singleton()->register_singleton("MySingleton", MySingleton::get_singleton());
+		// _my_singleton = memnew(MySingleton);
+		// Engine::get_singleton()->register_singleton("MySingleton", MySingleton::get_singleton());
 	}
 }
 
@@ -54,8 +54,8 @@ void gdextension_terminate(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
-		Engine::get_singleton()->unregister_singleton("MySingleton");
-		memdelete(_my_singleton);
+		// Engine::get_singleton()->unregister_singleton("MySingleton");
+		// memdelete(_my_singleton);
 	}
 }
 

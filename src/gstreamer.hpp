@@ -6,13 +6,12 @@
 
 using namespace godot;
 
-class MyNode : public Node
+class GStreamer : public RefCounted
 {
-	GDCLASS(MyNode, Node);
+	GDCLASS(GStreamer, RefCounted);
 
 protected:
 	static void _bind_methods();
-	static GstFlowReturn on_new_sample(GstElement *sink, gpointer user_data);
 
 private:
     GstElement *pipeline = nullptr;
@@ -21,18 +20,14 @@ private:
 
 public:
 
-	MyNode();
-	~MyNode();
+	GStreamer();
+	~GStreamer();
 
-	void _ready() override;
-	void _process(double delta) override;
+	// void _ready() override;
+	// void _process(double delta) override;
 
-	// void get_version();
 	Ref<ImageTexture> get_texture();
-	PackedByteArray get_texture_bytes();
 	void open_test_window();
 	void start_stream();
     void stop_stream();
-
-	godot::String hello_node();
 };
