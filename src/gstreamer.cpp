@@ -15,7 +15,6 @@ using namespace godot;
 
 void GStreamer::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("open_test_window"), &GStreamer::open_test_window);
     ClassDB::bind_method(D_METHOD("start_stream"), &GStreamer::start_stream);
     ClassDB::bind_method(D_METHOD("get_texture"), &GStreamer::get_texture);
 	ClassDB::bind_method(D_METHOD("stop_stream"), &GStreamer::stop_stream);
@@ -41,31 +40,39 @@ GStreamer::~GStreamer()
 // }
 
 
-void GStreamer::start_stream() {
+void GStreamer::start_stream(int port) {
     gst_init(nullptr, nullptr);
 
-    // Пайплайн для приёма H264 по UDP и декодирования
-    const char *pipeline_desc =
-        "udpsrc port=5000 caps=\"application/x-rtp, media=video, encoding-name=H264, payload=96\" ! "
+    if (pipelines.count(port)) {
+        UtilityFunctions::print("Pipeline for this port already exists.");
+        return;
+    }
+
+    std::string pipeline_desc =
+        "udpsrc port=" + std::to_string(port) + " caps=\"application/x-rtp, media=video, encoding-name=H264, payload=96\" ! "
         "rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=RGB ! appsink name=appsink";
 
     GError *error = nullptr;
-    pipeline = gst_parse_launch(pipeline_desc, &error);
+    GstElement *pipeline = gst_parse_launch(pipeline_desc.c_str(), &error);
     if (!pipeline) {
         UtilityFunctions::print("Failed to create pipeline");
         return;
     }
 
-    appsink = gst_bin_get_by_name(GST_BIN(pipeline), "appsink");
+    GstElement *appsink = gst_bin_get_by_name(GST_BIN(pipeline), "appsink");
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
+
+    pipelines[port] = pipeline;
+    appsinks[port] = appsink;
 }
 
 
-Ref<ImageTexture> GStreamer::get_texture() {
-    if (!appsink)
+Ref<ImageTexture> GStreamer::get_texture(int port) {
+    if (!appsinks.count(port))
         return nullptr;
 
-    // Ждём кадр до 100 мс
+    GstElement *appsink = appsinks[port];
+
     GstSample *sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 100 * GST_MSECOND);
     if (!sample)
         return nullptr;
@@ -88,59 +95,32 @@ Ref<ImageTexture> GStreamer::get_texture() {
         return nullptr;
     }
 
-    // Записываем байты в map_data
     PackedByteArray map_data;
-    map_data.resize(width * height * 3); // RGB8 format, 3 bytes per pixel
+    map_data.resize(width * height * 3);
     memcpy(map_data.ptrw(), map.data, map.size);
 
-    // Создаём Image из map_data
-    // Ref<Image> img = memnew(Image);
-    Ref<Image>img = Image::create_from_data(width, height, false, Image::FORMAT_RGB8, map_data);
+    Ref<Image> img = Image::create_from_data(width, height, false, Image::FORMAT_RGB8, map_data);
 
-    // Создаём ImageTexture из Image
-    if (!texture.is_valid()) {
-        // texture = memnew(ImageTexture);
-        // texture.instantiate();
-        // Если это первый кадр, создаём новый ImageTexture
-        texture = ImageTexture::create_from_image(img);
+    if (!textures[port].is_valid()) {
+        textures[port] = ImageTexture::create_from_image(img);
     } else {
-        // Иначе обновляем существующий ImageTexture, что б избежать лишних аллокаций
-        texture->update(img);
+        textures[port]->update(img);
     }
 
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
 
-    return texture;
+    return textures[port];
 }
 
-
-void GStreamer::stop_stream() {
-	gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
-}
-
-
-void GStreamer::open_test_window() {
-    gst_init(nullptr, nullptr);
-
-    // Use videotestsrc for a test pattern
-    GstElement *test_pipeline = gst_parse_launch(
-        "videotestsrc ! videoconvert ! autovideosink", nullptr);
-
-    if (!test_pipeline) {
-        g_printerr("Failed to create pipeline.\n");
+void GStreamer::stop_stream(int port) {
+    if (!pipelines.count(port))
         return;
-    }
 
-    gst_element_set_state(test_pipeline, GST_STATE_PLAYING);
-
-    // Run a GLib main loop to keep the window open
-    GMainLoop *loop = g_main_loop_new(nullptr, FALSE);
-    g_main_loop_run(loop);
-
-    // Cleanup
-    gst_element_set_state(test_pipeline, GST_STATE_NULL);
-    gst_object_unref(test_pipeline);
-    g_main_loop_unref(loop);
+    gst_element_set_state(pipelines[port], GST_STATE_NULL);
+    gst_object_unref(pipelines[port]);
+    gst_object_unref(appsinks[port]);
+    pipelines.erase(port);
+    appsinks.erase(port);
+    textures.erase(port);
 }

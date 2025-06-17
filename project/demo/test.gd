@@ -1,8 +1,12 @@
 extends Node
 
-@onready var label: Label = $Label
 var _should_get_video_from_port := false
 var _gstreamer: GStreamer
+
+@onready var _frames := [
+	$VBoxContainer/Frames/FramePanel/FrameContainer/Frame,
+	$VBoxContainer/Frames/FramePanel2/FrameContainer/Frame
+]
 
 
 func _ready() -> void:
@@ -14,9 +18,12 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if !_should_get_video_from_port: return
-	var tex = _gstreamer.get_texture()
+	var tex = _gstreamer.get_texture(5000)
 	if tex:
-		$TextureRect.texture = tex
+		_frames[0].texture = tex
+	var tex2 = _gstreamer.get_texture(5001)
+	if tex2:
+		_frames[1].texture = tex2
 	
 	#var bytes = $GStreamer.get_texture_bytes()
 	#if bytes.size() == 0: return
@@ -26,10 +33,7 @@ func _process(delta: float) -> void:
 		#$TextureRect.texture = tex
 
 
-func _on_test_pressed() -> void:
-	_gstreamer.open_test_window()
-
-
 func _on_get_pressed() -> void:
 	_should_get_video_from_port = true
-	_gstreamer.start_stream()
+	_gstreamer.start_stream(5000)
+	_gstreamer.start_stream(5001)

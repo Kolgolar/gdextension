@@ -16,40 +16,75 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -357.0
-offset_top = -40.0
-offset_right = 357.0
 grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 20
+grow_vertical = 2
+theme_override_constants/separation = 10
 
-[node name="Test" type="Button" parent="HBoxContainer"]
+[node name="Frames" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
-text = "Воспроизвести тестовый видеопоток"
+size_flags_vertical = 3
+theme_override_constants/separation = 30
 
-[node name="Get" type="Button" parent="HBoxContainer"]
+[node name="FramePanel" type="Panel" parent="VBoxContainer/Frames"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FrameContainer" type="MarginContainer" parent="VBoxContainer/Frames/FramePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Frame" type="TextureRect" parent="VBoxContainer/Frames/FramePanel/FrameContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 5
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FramePanel2" type="Panel" parent="VBoxContainer/Frames"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FrameContainer" type="MarginContainer" parent="VBoxContainer/Frames/FramePanel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Frame" type="TextureRect" parent="VBoxContainer/Frames/FramePanel2/FrameContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 5
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ControlButtons" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Get" type="Button" parent="VBoxContainer/ControlButtons"]
 layout_mode = 2
 text = "Получить и отобразить тестовый видеопоток"
 
-[node name="TextureRect" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(640, 480)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-grow_horizontal = 2
-grow_vertical = 2
-expand_mode = 3
-stretch_mode = 5
-
-[connection signal="pressed" from="HBoxContainer/Test" to="." method="_on_test_pressed"]
-[connection signal="pressed" from="HBoxContainer/Get" to="." method="_on_get_pressed"]
+[connection signal="pressed" from="VBoxContainer/ControlButtons/Get" to="." method="_on_get_pressed"]
