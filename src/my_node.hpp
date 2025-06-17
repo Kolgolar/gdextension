@@ -17,9 +17,9 @@ protected:
 private:
     GstElement *pipeline = nullptr;
     GstElement *appsink = nullptr;
+	Ref<ImageTexture> texture;
 
 public:
-	Ref<ImageTexture> texture;
 
 	MyNode();
 	~MyNode();
@@ -29,6 +29,7 @@ public:
 
 	// void get_version();
 	Ref<ImageTexture> get_texture();
+	PackedByteArray get_texture_bytes();
 	void open_test_window();
 	void start_stream();
     void stop_stream();

@@ -69,31 +69,46 @@ Ref<ImageTexture> MyNode::get_texture() {
     if (!appsink)
         return nullptr;
 
-    GstSample *sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 0);
+    // Ждём кадр до 100 мс
+    GstSample *sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 100 * GST_MSECOND);
     if (!sample)
         return nullptr;
 
     GstBuffer *buffer = gst_sample_get_buffer(sample);
     GstCaps *caps = gst_sample_get_caps(sample);
+    if (!caps) {
+        gst_sample_unref(sample);
+        return nullptr;
+    }
     GstStructure *s = gst_caps_get_structure(caps, 0);
 
-    int width, height;
+    int width = 0, height = 0;
     gst_structure_get_int(s, "width", &width);
     gst_structure_get_int(s, "height", &height);
 
     GstMapInfo map;
-    gst_buffer_map(buffer, &map, GST_MAP_READ);
+    if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+        gst_sample_unref(sample);
+        return nullptr;
+    }
 
-    Ref<Image> img = memnew(Image);
-    PackedByteArray arr;
-    arr.resize(width * height * 3);
-    memcpy(arr.ptrw(), map.data, width * height * 3);
-    img->create_from_data(width, height, false, Image::FORMAT_RGB8, arr);
-    Ref<ImageTexture> texture;
+    // Записываем байты в map_data
+    PackedByteArray map_data;
+    map_data.resize(width * height * 3); // RGB8 format, 3 bytes per pixel
+    memcpy(map_data.ptrw(), map.data, map.size);
+
+    // Создаём Image из map_data
+    // Ref<Image> img = memnew(Image);
+    Ref<Image>img = Image::create_from_data(width, height, false, Image::FORMAT_RGB8, map_data);
+
+    // Создаём ImageTexture из Image
     if (!texture.is_valid()) {
-        texture.instantiate();
-        texture->create_from_image(img);
+        // texture = memnew(ImageTexture);
+        // texture.instantiate();
+        // Если это первый кадр, создаём новый ImageTexture
+        texture = ImageTexture::create_from_image(img);
     } else {
+        // Иначе обновляем существующий ImageTexture, что б избежать лишних аллокаций
         texture->update(img);
     }
 
@@ -136,10 +151,6 @@ void MyNode::open_test_window() {
     g_main_loop_unref(loop);
 }
 
-
-// void get_version() {
-
-// }
 
 
 godot::String MyNode::hello_node()

@@ -6,7 +6,7 @@
 		"type": "lldb",
 		"request": "launch",
 		"preLaunchTask": "build", 
-		"program": "/home/admin/Downloads/Godot_v4.4.1-stable_linux.x86_64",
+		"program": "/home/admin/Progs/Godot_v4.4.1-stable_linux.x86_64",
 		"args": ["--path", "/home/admin/Job/gdextension/project"],
 		"cwd": "${workspaceFolder}/project",
 		// "stopAtEntry": false

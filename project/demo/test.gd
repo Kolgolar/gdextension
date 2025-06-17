@@ -15,6 +15,13 @@ func _process(delta: float) -> void:
 	var tex = $MyNode.get_texture()
 	if tex:
 		$TextureRect.texture = tex
+	
+	#var bytes = $MyNode.get_texture_bytes()
+	#if bytes.size() == 0: return
+	#var img = Image.create_from_data(320, 240, false, Image.FORMAT_RGB8, bytes)
+	#var tex = ImageTexture.create_from_image(img)
+	#if tex:
+		#$TextureRect.texture = tex
 
 
 func _on_test_pressed() -> void:
