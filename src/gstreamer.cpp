@@ -66,6 +66,7 @@ void GStreamer::start_stream(int port) {
     appsinks[port] = appsink;
 }
 
+// gst-launch-1.0 videotestsrc ! video/x-raw, framerate=30/1, width=1920, height=1080 ! videoconvert ! x264enc tune=zerolatency ! rtph264pay ! udpsink host=127.0.0.1 port=5000
 
 Ref<ImageTexture> GStreamer::get_texture(int port) {
     if (!appsinks.count(port))

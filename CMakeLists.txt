@@ -31,7 +31,7 @@ include_directories(${GST_INCLUDE_DIRS})
 link_directories(${GST_LIBRARY_DIRS})
 
 message(STATUS "GStreamer библиотеки: ${GST_LIBRARIES}")
-message(STATUS "GStreamer пути до заголовочных файлов: ${GST_INCLUDE_DIRS}")
+message(STATUS "Директории заголовочных файлов GStreamer: ${GST_INCLUDE_DIRS}")
 
 ### 3. Настройка самого GDExtension
 set(SOURCES
@@ -74,7 +74,14 @@ endif()
 
 ### 5. Копирование скомпилированной библиотеки в папку проекта Godot
 add_custom_command(TARGET gstreamer_godot POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/project/addons/gstreamer_godot/bin/
     COMMAND ${CMAKE_COMMAND} -E copy
             $<TARGET_FILE:gstreamer_godot>
             ${CMAKE_SOURCE_DIR}/project/addons/gstreamer_godot/bin/
 )
+
+# add_custom_command(TARGET gstreamer_godot POST_BUILD
+#     # COMMAND ldd $<TARGET_FILE:gstreamer_godot> | grep "=> /" | awk "{print \$3}" > ${CMAKE_SOURCE_DIR}/ldd_libs.txt
+#     # COMMAND cat ${CMAKE_SOURCE_DIR}/ldd_libs.txt
+#     COMMAND xargs -a ${CMAKE_SOURCE_DIR}/ldd_libs.txt -I '{}' cp -u '{}' ${CMAKE_SOURCE_DIR}/project/addons/gstreamer_godot/bin/
+# )

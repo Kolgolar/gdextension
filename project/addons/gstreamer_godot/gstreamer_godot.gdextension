@@ -21,5 +21,3 @@ macos.release = "bin/libexample.macos.release.framework"
 android.debug.arm64 = "bin/libexample.android.debug.arm64.so"
 android.release.arm64 = "bin/libexample.android.release.arm64.so"
 
-[dependencies]
-
