@@ -41,6 +41,7 @@ GStreamer::~GStreamer()
 
 
 void GStreamer::start_stream(int port) {
+    setenv("GST_DEBUG", "3", 1);
     gst_init(nullptr, nullptr);
 
     if (pipelines.count(port)) {
@@ -48,9 +49,21 @@ void GStreamer::start_stream(int port) {
         return;
     }
 
+    // std::string pipeline_desc =
+    // "udpsrc port=" + std::to_string(port) + " caps=\"application/x-rtp, media=video, encoding-name=H264, payload=96\" ! "
+    // "rtpjitterbuffer ! "
+    // "rtph264depay ! h264parse ! nvh264dec ! "
+    // "videoconvert ! video/x-raw,format=RGB ! "
+    // "appsink name=appsink emit-signals=true sync=false max-buffers=1 drop=true";
+
     std::string pipeline_desc =
-        "udpsrc port=" + std::to_string(port) + " caps=\"application/x-rtp, media=video, encoding-name=H264, payload=96\" ! "
-        "rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=RGB ! appsink name=appsink";
+    "udpsrc port=" + std::to_string(port) + " ! "
+    "application/x-rtp, media=video, encoding-name=H264, payload=96, clock-rate=90000 ! "
+    "rtpjitterbuffer latency=100 ! rtph264depay ! h264parse ! nvh264dec ! "
+    "videoconvert ! video/x-raw,format=RGB ! "
+    "appsink name=appsink emit-signals=true sync=false max-buffers=1 drop=true";
+
+
 
     GError *error = nullptr;
     GstElement *pipeline = gst_parse_launch(pipeline_desc.c_str(), &error);
@@ -74,7 +87,7 @@ Ref<ImageTexture> GStreamer::get_texture(int port) {
 
     GstElement *appsink = appsinks[port];
 
-    GstSample *sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 100 * GST_MSECOND);
+    GstSample *sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 0 * GST_MSECOND);
     if (!sample)
         return nullptr;
 
