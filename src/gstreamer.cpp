@@ -7,6 +7,9 @@
 #include <godot_cpp/godot.hpp>
 
 #include <gst/app/gstappsink.h>
+#include <regex>
+#include <iostream>
+#include <string>
 
 
 using namespace godot;
@@ -40,7 +43,19 @@ GStreamer::~GStreamer()
 // }
 
 
-void GStreamer::start_stream(int port) {
+void GStreamer::start_stream(godot::String pipeline_desc) {
+    std::string pipeline_desc_converted = pipeline_desc.utf8().get_data();
+    std::regex port_regex(R"(port\s*=\s*(\d+))");
+    std::smatch match;
+
+    int port = -1;
+    if (std::regex_search(pipeline_desc_converted, match, port_regex) && match.size() > 1) {
+        port = std::stoi(match[1]);
+    } else {
+        UtilityFunctions::print("Не онаруен порт в папане");
+        return;
+    }
+
     setenv("GST_DEBUG", "3", 1);
     gst_init(nullptr, nullptr);
 
@@ -49,24 +64,8 @@ void GStreamer::start_stream(int port) {
         return;
     }
 
-    // std::string pipeline_desc =
-    // "udpsrc port=" + std::to_string(port) + " caps=\"application/x-rtp, media=video, encoding-name=H264, payload=96\" ! "
-    // "rtpjitterbuffer ! "
-    // "rtph264depay ! h264parse ! nvh264dec ! "
-    // "videoconvert ! video/x-raw,format=RGB ! "
-    // "appsink name=appsink emit-signals=true sync=false max-buffers=1 drop=true";
-
-    std::string pipeline_desc =
-    "udpsrc port=" + std::to_string(port) + " ! "
-    "application/x-rtp, media=video, encoding-name=H264, payload=96, clock-rate=90000 ! "
-    "rtpjitterbuffer latency=100 ! rtph264depay ! h264parse ! nvh264dec ! "
-    "videoconvert ! video/x-raw,format=RGB ! "
-    "appsink name=appsink emit-signals=true sync=false max-buffers=1 drop=true";
-
-
-
     GError *error = nullptr;
-    GstElement *pipeline = gst_parse_launch(pipeline_desc.c_str(), &error);
+    GstElement *pipeline = gst_parse_launch(pipeline_desc_converted.c_str(), &error);
     if (!pipeline) {
         UtilityFunctions::print("Failed to create pipeline");
         return;
@@ -79,7 +78,6 @@ void GStreamer::start_stream(int port) {
     appsinks[port] = appsink;
 }
 
-// gst-launch-1.0 videotestsrc ! video/x-raw, framerate=30/1, width=1920, height=1080 ! videoconvert ! x264enc tune=zerolatency ! rtph264pay ! udpsink host=127.0.0.1 port=5000
 
 Ref<ImageTexture> GStreamer::get_texture(int port) {
     if (!appsinks.count(port))

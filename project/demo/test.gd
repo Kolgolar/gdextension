@@ -2,6 +2,16 @@ extends Node
 
 var _should_get_video_from_port := false
 var _gstreamer: GStreamer
+var _pipeline_base: String = \
+"""
+udpsrc port=%s ! \
+application/x-rtp, media=video, encoding-name=H264, payload=96, clock-rate=90000 ! \
+rtpjitterbuffer latency=100 ! rtph264depay ! h264parse ! nvh264dec ! \
+videoconvert ! video/x-raw,format=RGB ! \
+appsink name=appsink emit-signals=true sync=false max-buffers=1 drop=true
+"""
+
+
 
 @onready var _frames := [
 	$VBoxContainer/Frames/FramePanel/FrameContainer/Frame,
@@ -29,6 +39,6 @@ func _process(delta: float) -> void:
 
 func _on_get_pressed() -> void:
 	_should_get_video_from_port = true
-	_gstreamer.start_stream(5000)
-	_gstreamer.start_stream(5001)
-	_gstreamer.start_stream(5002)
+	_gstreamer.start_stream(_pipeline_base % 5000)
+	_gstreamer.start_stream(_pipeline_base % 5001)
+	_gstreamer.start_stream(_pipeline_base % 5002)

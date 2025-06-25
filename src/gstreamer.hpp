@@ -24,6 +24,6 @@ public:
     ~GStreamer();
 
     Ref<ImageTexture> get_texture(int port);
-    void start_stream(int port);
+    void start_stream(godot::String pipeline_desc);
     void stop_stream(int port);
 };
