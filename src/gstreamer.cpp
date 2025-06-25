@@ -1,20 +1,17 @@
-#include "gstreamer.hpp"
-
-// #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/godot.hpp>
 
 #include <gst/app/gstappsink.h>
+#include "gstreamer.hpp"
+
 #include <regex>
 #include <iostream>
 #include <string>
 
 
 using namespace godot;
-
-// typedef void (*gst_init_func)(int*, char***);
 
 void GStreamer::_bind_methods()
 {
@@ -30,18 +27,17 @@ GStreamer::GStreamer()
 
 GStreamer::~GStreamer()
 {
+    for (auto it = pipelines.begin(); it != pipelines.end(); ) {
+        int port = it->first;
+
+        if (pipelines.count(port)) {
+            stop_stream(port);
+            it = pipelines.begin();
+        } else {
+            ++it;
+        }
+    }
 }
-
-// Override built-in methods with your own logic. Make sure to declare them in the header as well!
-
-// void GStreamer::_ready()
-// {
-// }
-
-// void GStreamer::_process(double delta)
-// {
-// }
-
 
 void GStreamer::start_stream(godot::String pipeline_desc) {
     std::string pipeline_desc_converted = pipeline_desc.utf8().get_data();
@@ -135,4 +131,5 @@ void GStreamer::stop_stream(int port) {
     pipelines.erase(port);
     appsinks.erase(port);
     textures.erase(port);
+    UtilityFunctions::print("Pipeline " + UtilityFunctions::str(port) + " stopped.");
 }
