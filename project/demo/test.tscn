@@ -11,6 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_b04qc")
+_max_framerate = 30.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -112,4 +113,12 @@ alignment = 1
 layout_mode = 2
 text = "Получить и отобразить тестовый видеопоток"
 
+[node name="Stop" type="Button" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+text = "Остановить"
+
+[node name="UpdateFrames" type="Timer" parent="."]
+
 [connection signal="pressed" from="VBoxContainer/ControlButtons/Get" to="." method="_on_get_pressed"]
+[connection signal="pressed" from="VBoxContainer/ControlButtons/Stop" to="." method="_on_stop_pressed"]
+[connection signal="timeout" from="UpdateFrames" to="." method="_on_update_frames_timeout"]

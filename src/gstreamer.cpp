@@ -16,7 +16,7 @@ using namespace godot;
 void GStreamer::_bind_methods()
 {
     ClassDB::bind_method(D_METHOD("start_stream"), &GStreamer::start_stream);
-    ClassDB::bind_method(D_METHOD("get_texture"), &GStreamer::get_texture);
+    ClassDB::bind_method(D_METHOD("get_image"), &GStreamer::get_image);
 	ClassDB::bind_method(D_METHOD("stop_stream"), &GStreamer::stop_stream);
 }
 
@@ -75,7 +75,7 @@ void GStreamer::start_stream(godot::String pipeline_desc) {
 }
 
 
-Ref<ImageTexture> GStreamer::get_texture(int port) {
+Ref<Image> GStreamer::get_image(int port) {
     if (!appsinks.count(port))
         return nullptr;
 
@@ -109,16 +109,17 @@ Ref<ImageTexture> GStreamer::get_texture(int port) {
 
     Ref<Image> img = Image::create_from_data(width, height, false, Image::FORMAT_RGB8, map_data);
 
-    if (!textures[port].is_valid()) {
-        textures[port] = ImageTexture::create_from_image(img);
-    } else {
-        textures[port]->update(img);
-    }
+    images[port] = img;
+    // if (!images[port].is_valid()) {
+    //     images[port] = ImageTexture::create_from_image(img);
+    // } else {
+    //     images[port]->update(img);
+    // }
 
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
 
-    return textures[port];
+    return images[port];
 }
 
 void GStreamer::stop_stream(int port) {
@@ -130,6 +131,6 @@ void GStreamer::stop_stream(int port) {
     gst_object_unref(appsinks[port]);
     pipelines.erase(port);
     appsinks.erase(port);
-    textures.erase(port);
+    images.erase(port);
     UtilityFunctions::print("Pipeline " + UtilityFunctions::str(port) + " stopped.");
 }

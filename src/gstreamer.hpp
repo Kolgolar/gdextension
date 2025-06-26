@@ -17,13 +17,13 @@ protected:
 private:
     std::map<int, GstElement*> pipelines;
     std::map<int, GstElement*> appsinks;
-    std::map<int, Ref<ImageTexture>> textures;
+    std::map<int, Ref<Image>> images;
 
 public:
     GStreamer();
     ~GStreamer();
 
-    Ref<ImageTexture> get_texture(int port);
+    Ref<Image> get_image(int port);
     void start_stream(godot::String pipeline_desc);
     void stop_stream(int port);
 };
