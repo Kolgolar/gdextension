@@ -15,23 +15,24 @@ using namespace godot;
 
 void GStreamer::_bind_methods()
 {
-    ClassDB::bind_method(D_METHOD("start_stream"), &GStreamer::start_stream);
-    ClassDB::bind_method(D_METHOD("get_image"), &GStreamer::get_image);
-	ClassDB::bind_method(D_METHOD("stop_stream"), &GStreamer::stop_stream);
+    ClassDB::bind_method(D_METHOD("start_sink_stream"), &GStreamer::start_sink_stream);
+    ClassDB::bind_method(D_METHOD("get_sink_image"), &GStreamer::get_sink_image);
+	ClassDB::bind_method(D_METHOD("stop_sink_stream"), &GStreamer::stop_sink_stream);
 }
 
 GStreamer::GStreamer()
 {
-    UtilityFunctions::print("GStreamer addon is ready!");
+    UtilityFunctions::print("GStreamer addon is ready! Yay!");
 }
 
+// Завершаем все потоки, если нода уничтожается
 GStreamer::~GStreamer()
 {
     for (auto it = pipelines.begin(); it != pipelines.end(); ) {
         int port = it->first;
 
         if (pipelines.count(port)) {
-            stop_stream(port);
+            stop_sink_stream(port);
             it = pipelines.begin();
         } else {
             ++it;
@@ -39,7 +40,8 @@ GStreamer::~GStreamer()
     }
 }
 
-void GStreamer::start_stream(godot::String pipeline_desc) {
+
+void GStreamer::start_sink_stream(godot::String pipeline_desc) {
     std::string pipeline_desc_converted = pipeline_desc.utf8().get_data();
     std::regex port_regex(R"(port\s*=\s*(\d+))");
     std::smatch match;
@@ -48,22 +50,22 @@ void GStreamer::start_stream(godot::String pipeline_desc) {
     if (std::regex_search(pipeline_desc_converted, match, port_regex) && match.size() > 1) {
         port = std::stoi(match[1]);
     } else {
-        UtilityFunctions::print("Не онаруен порт в папане");
+        UtilityFunctions::print("Не обнаружен порт в указанном пайплайне.");
         return;
     }
 
-    setenv("GST_DEBUG", "3", 1);
+    setenv("GST_DEBUG", "3", 1); // Включаем подробный дебаг gstreamer
     gst_init(nullptr, nullptr);
 
     if (pipelines.count(port)) {
-        UtilityFunctions::print("Pipeline for this port already exists.");
+        UtilityFunctions::push_warning("Пайплайн на этом порту уже существует.");
         return;
     }
 
     GError *error = nullptr;
     GstElement *pipeline = gst_parse_launch(pipeline_desc_converted.c_str(), &error);
     if (!pipeline) {
-        UtilityFunctions::print("Failed to create pipeline");
+        UtilityFunctions::printerr("Не удалось создать пайплайн.");
         return;
     }
 
@@ -75,7 +77,7 @@ void GStreamer::start_stream(godot::String pipeline_desc) {
 }
 
 
-Ref<Image> GStreamer::get_image(int port) {
+Ref<Image> GStreamer::get_sink_image(int port) {
     if (!appsinks.count(port))
         return nullptr;
 
@@ -110,11 +112,6 @@ Ref<Image> GStreamer::get_image(int port) {
     Ref<Image> img = Image::create_from_data(width, height, false, Image::FORMAT_RGB8, map_data);
 
     images[port] = img;
-    // if (!images[port].is_valid()) {
-    //     images[port] = ImageTexture::create_from_image(img);
-    // } else {
-    //     images[port]->update(img);
-    // }
 
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
@@ -122,7 +119,9 @@ Ref<Image> GStreamer::get_image(int port) {
     return images[port];
 }
 
-void GStreamer::stop_stream(int port) {
+
+
+void GStreamer::stop_sink_stream(int port) {
     if (!pipelines.count(port))
         return;
 
@@ -132,5 +131,5 @@ void GStreamer::stop_stream(int port) {
     pipelines.erase(port);
     appsinks.erase(port);
     images.erase(port);
-    UtilityFunctions::print("Pipeline " + UtilityFunctions::str(port) + " stopped.");
+    UtilityFunctions::print("Пайплайн " + UtilityFunctions::str(port) + " остановлен.");
 }

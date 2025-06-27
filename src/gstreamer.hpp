@@ -15,15 +15,18 @@ protected:
     static void _bind_methods();
 
 private:
-    std::map<int, GstElement*> pipelines;
-    std::map<int, GstElement*> appsinks;
-    std::map<int, Ref<Image>> images;
+    std::map<int, GstElement*> pipelines; // Все пайплайны
+    std::map<int, GstElement*> appsinks; // Все потоки, принимающие кадры
+    std::map<int, Ref<Image>> images; // Все полученные кадры (в виде Годотовского Image)
 
 public:
     GStreamer();
     ~GStreamer();
-
-    Ref<Image> get_image(int port);
-    void start_stream(godot::String pipeline_desc);
-    void stop_stream(int port);
+    // Обращаемся к созданному через пайплайн потоку,
+    // чтобы получить последний актуальный кадр
+    Ref<Image> get_sink_image(int port);
+    // Передаём пайплайн и создаём поток, который будет принимать кадры
+    void start_sink_stream(godot::String pipeline_desc);
+    // Останавливаем поток приёма кадров
+    void stop_sink_stream(int port);
 };
